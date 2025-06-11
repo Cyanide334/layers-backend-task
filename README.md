@@ -1,4 +1,4 @@
-# Fashion Product Backend
+# Layers Backend
 
 A Flask-based backend service for managing fashion products, SKUs, and order processing.
 
@@ -20,7 +20,7 @@ pip install -r requirements.txt
 python app.py
 ```
 
-The server will start at `http://localhost:5000`
+The server will start at `http://localhost:5000`. You can start up another terminal and use curl to send API requests.
 
 > **Note:** This is a development version that uses in-memory storage (no database required). All data will be reset when the server restarts. No environment variables or configuration files are needed.
 
@@ -48,10 +48,12 @@ The sample file contains 100 products from various brands including Levi's, Carh
 
 ## API Endpoints
 
+> **Note**: The SKU IDs used in these examples are for demonstration only. In practice, you should first use the **GET** `/sku/listings` endpoint to get a list of all SKUs and their IDs, then use a real SKU ID from that list.
+
 ### 1. Import Products
 **POST** `/import-csv`
 
-Import products from a CSV file.
+Import products from a CSV file. Duplicate SKUs (based on barcode) will be automatically skipped.
 
 ```bash
 curl -X POST http://localhost:5000/import-csv \
@@ -61,7 +63,7 @@ curl -X POST http://localhost:5000/import-csv \
 Response:
 ```json
 {
-    "message": "Successfully imported 4 SKUs"
+    "message": "Successfully imported 4 SKUs, skipped 2 duplicates"
 }
 ```
 
@@ -104,7 +106,10 @@ curl http://localhost:5000/sku/listings
 ### 3. Order Delivery Webhook
 **POST** `/webhook/order-delivered`
 
-Record an order delivery.
+Record an order delivery. Validates that:
+- The SKU exists
+- The delivery date is not in the future
+- Updates existing order if the SKU already has one
 
 ```bash
 curl -X POST http://localhost:5000/webhook/order-delivered \
@@ -119,6 +124,18 @@ Response:
 ```json
 {
     "message": "Order delivery recorded successfully"
+}
+```
+
+Error responses:
+```json
+{
+    "error": "SKU not found"
+}
+```
+```json
+{
+    "error": "Delivery date cannot be in the future"
 }
 ```
 
@@ -139,8 +156,6 @@ Response:
 ```
 
 ## Features
-
-> **Note**: This is an in-memory implementation using server memory instead of a database. All data will be reset when the server restarts.
 
 - **Data Integrity**: Enforces unique constraints on SKU IDs and barcodes
 - **Smart Order Management**: Automatically updates existing orders when new delivery notifications are received for the same SKU
