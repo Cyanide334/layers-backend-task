@@ -140,6 +140,14 @@ Response:
 
 ## Features
 
-- Dynamic tag generation from product titles (excluding brand names)
-- Mock price generation based on brand (30%), last tag (60%), and number of tags (10%)
-- Mock category ID generation based on the last tag 
+> **Note**: This is an in-memory implementation using server memory instead of a database. All data will be reset when the server restarts.
+
+- **Data Integrity**: Enforces unique constraints on SKU IDs and barcodes
+- **Smart Order Management**: Automatically updates existing orders when new delivery notifications are received for the same SKU
+- **Efficient Lookups**: Uses optimized data structures for fast SKU and order retrieval
+- **Duplicate Prevention**: Automatically skips duplicate SKUs during CSV import
+- **Dynamic Tag Generation**: Intelligently extracts relevant tags from product titles while excluding brand names
+- **Smart Pricing**: Calculates prices using a weighted formula: 30% brand value, 60% product category, 10% tag complexity
+- **Category ID Generation**: Derives marketplace category IDs from product tags for accurate listing placement
+- **Consistent Mock Values**: All generated values (tags, prices, categories) are deterministic based on product title and brand, ensuring consistency across imports
+- **Order Validation**: Ensures orders can only be created for existing SKUs, maintaining data consistency

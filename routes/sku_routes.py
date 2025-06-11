@@ -2,7 +2,7 @@ from flask import Blueprint, request, jsonify
 import pandas as pd
 import uuid
 from datetime import datetime
-from models.sku import SKU, sku_store
+from models.sku import SKU, add_sku, get_sku_by_id, get_sku_by_barcode, sku_store
 from utils import generate_tags, generate_category_id, generate_mock_price
 
 sku_bp = Blueprint('sku', __name__)
@@ -39,6 +39,7 @@ def import_csv():
             return jsonify({'error': 'CSV must contain barcode, title, brand, and image_url columns'}), 400
 
         imported_count = 0
+        skipped_count = 0
         for _, row in df.iterrows():
             sku_id = str(uuid.uuid4())
             tags = generate_tags(row['title'], row['brand'])
@@ -51,11 +52,14 @@ def import_csv():
                 image_url=row['image_url'],
                 tags=tags
             )
-            sku_store.append(sku)
-            imported_count += 1
+            
+            if add_sku(sku):
+                imported_count += 1
+            else:
+                skipped_count += 1
 
         return jsonify({
-            'message': f'Successfully imported {imported_count} SKUs'
+            'message': f'Successfully imported {imported_count} SKUs, skipped {skipped_count} duplicates'
         }), 200
 
     except Exception as e:
@@ -74,7 +78,7 @@ def get_listings(sku_id):
         - Depop: title, brand, tags, image
         - eBay: title, category_id, price, image
     """
-    sku = next((s for s in sku_store if s.sku_id == sku_id), None)
+    sku = get_sku_by_id(sku_id)
     if not sku:
         return jsonify({'error': 'SKU not found'}), 404
 
@@ -102,7 +106,7 @@ def get_listings(sku_id):
 
     return jsonify(listings), 200
 
-@sku_bp.route('/listings', methods=['GET'])
+@sku_bp.route('/sku/listings', methods=['GET'])
 def get_all_listings():
     """
     Get marketplace-ready listings for all SKUs.
